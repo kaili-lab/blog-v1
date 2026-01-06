@@ -3,7 +3,7 @@
  * 运行方式: npx tsx scripts/generate-test-report.ts
  */
 
-import { searchPostsWithFilters } from "@/lib/actions/post";
+import { searchPostsWithFilters } from "@/lib/db-access/post";
 
 interface TestResult {
   query: string;
@@ -115,10 +115,12 @@ async function generateTestReport() {
       // 显示前3个结果
       if (result.posts.length > 0) {
         console.log("\n📝 搜索结果:");
-        result.posts.slice(0, 3).forEach((post, index) => {
-          console.log(`  ${index + 1}. ${post.title}`);
-          console.log(`     简介: ${post.brief}`);
-        });
+        result.posts
+          .slice(0, 3)
+          .forEach((post: { title: string; brief: string }, index: number) => {
+            console.log(`  ${index + 1}. ${post.title}`);
+            console.log(`     简介: ${post.brief}`);
+          });
       }
     } catch (error) {
       const errorMessage =

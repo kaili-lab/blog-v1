@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:create": "npx tsx scripts/create-test-posts.ts",
     "test:report": "npx tsx scripts/generate-test-report.ts",
-    "inngest": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest"
+    "inngest": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -71,5 +72,10 @@
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@auth/core": "0.41.1"
+    }
   }
 }

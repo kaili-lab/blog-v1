@@ -31,7 +31,7 @@ export async function handleOAuthSignIn(
     if (existingUser) {
       // 检查是否已经链接了当前provider
       const existingAccount = existingUser.account.find(
-        (acc) => acc.provider === account.provider
+        (acc: { provider: string }) => acc.provider === account.provider
       );
 
       if (!existingAccount) {

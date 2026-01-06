@@ -12,6 +12,7 @@ import {
 } from "../vector";
 import { prisma } from "../db";
 import { logger } from "../logger";
+import type { PostWithRelations } from "../db-access/post";
 
 export interface Post {
   id: string;
@@ -143,18 +144,25 @@ export async function searchPosts(
     });
 
     // 5. Combine with search metadata
-    const enrichedPosts = posts.map((post) => {
-      const searchResult = uniquePosts.get(post.id);
-      return {
-        ...post,
-        similarity: searchResult?.similarity || 0,
-        snippet: searchResult?.text_chunk?.slice(0, 200) + "..." || post.brief,
-      };
-    });
+    type EnrichedPost = PostWithRelations & {
+      similarity: number;
+      snippet: string;
+    };
+    const enrichedPosts: EnrichedPost[] = posts.map(
+      (post: PostWithRelations) => {
+        const searchResult = uniquePosts.get(post.id);
+        return {
+          ...post,
+          similarity: searchResult?.similarity || 0,
+          snippet:
+            searchResult?.text_chunk?.slice(0, 200) + "..." || post.brief,
+        };
+      }
+    );
 
     // 6. Sort by similarity and apply pagination
     const sortedPosts = enrichedPosts
-      .sort((a, b) => b.similarity - a.similarity)
+      .sort((a: EnrichedPost, b: EnrichedPost) => b.similarity - a.similarity)
       .slice((page - 1) * limit, page * limit);
 
     const totalPages = Math.ceil(enrichedPosts.length / limit);

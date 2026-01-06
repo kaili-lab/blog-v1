@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // 关键配置：告诉 Next.js 不要打包这些包，直接使用 node_modules 中的版本，升级Nextjs16之后遇到的问题：因为使用tiktoken，Nextjs16的tuebo导致tiktoken无法被正确打包，所以需要告诉Nextjs不要打包tiktoken
-  serverExternalPackages: ["tiktoken", "@dqbd/tiktoken"],
+  // transliteration 包在 Next.js 16 Turbopack 构建时无法正确解析浏览器版本，需要外部化处理
+  serverExternalPackages: ["tiktoken", "@dqbd/tiktoken", "transliteration"],
 
   /* config options here */
 

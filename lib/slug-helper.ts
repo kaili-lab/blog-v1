@@ -1,4 +1,5 @@
-import { slugify } from "transliteration";
+// 明确导入 Node.js 版本，避免 Turbopack 选择浏览器版本导致构建失败
+import { slugify } from "transliteration/dist/node/src/node/index.js";
 
 export function generateSlug(
   text: string,

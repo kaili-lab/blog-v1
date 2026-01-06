@@ -36,13 +36,21 @@ export async function queryAllCategories(page: number = 1, limit: number = 5) {
     });
 
     // ✅ 转换为更直观的数据结构
-    const categories: CategoryWithPosts[] = categoriesRaw.map((category) => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      createdAt: category.createdAt,
-      postCount: category._count.posts, // 转换为 postCount
-    }));
+    const categories: CategoryWithPosts[] = categoriesRaw.map(
+      (category: {
+        id: string;
+        name: string;
+        slug: string;
+        createdAt: Date;
+        _count: { posts: number };
+      }) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        createdAt: category.createdAt,
+        postCount: category._count.posts, // 转换为 postCount
+      })
+    );
 
     return {
       success: true,
@@ -70,4 +78,3 @@ export async function queryAllCategories(page: number = 1, limit: number = 5) {
     };
   }
 }
-

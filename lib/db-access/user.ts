@@ -46,7 +46,7 @@ export async function queryAllUsers(
           image: true,
           createdAt: true,
           _count: {
-            select: { Post: true },
+            select: { posts: true },
           },
         },
       }),
@@ -56,15 +56,25 @@ export async function queryAllUsers(
     ]);
 
     // 2️⃣ 数据转换：将 _count.posts 转为 postCount
-    const transformedUsers: UserWithPosts[] = users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      image: user.image,
-      createdAt: user.createdAt,
-      postCount: user._count.Post,
-    }));
+    const transformedUsers: UserWithPosts[] = users.map(
+      (user: {
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+        image: string | null;
+        createdAt: Date;
+        _count: { posts: number };
+      }) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+        createdAt: user.createdAt,
+        postCount: user._count.posts,
+      })
+    );
 
     // 3️⃣ 计算总页数
     const totalPages = Math.ceil(totalCount / pageSize);
@@ -111,4 +121,3 @@ export async function getAdminUser() {
     return null;
   }
 }
-

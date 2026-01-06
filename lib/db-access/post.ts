@@ -318,24 +318,29 @@ export async function queryPublishedPosts(
     const totalPages = Math.ceil(totalCount / pageSize);
 
     // 手动排序：优先按 publishedAt，然后按 createdAt
-    const sortedPosts = posts.sort((a, b) => {
-      // 如果两个都有 publishedAt，按 publishedAt 排序
-      if (a.publishedAt && b.publishedAt) {
+    const sortedPosts = posts.sort(
+      (a: PostWithRelations, b: PostWithRelations) => {
+        // 如果两个都有 publishedAt，按 publishedAt 排序
+        if (a.publishedAt && b.publishedAt) {
+          return (
+            new Date(b.publishedAt).getTime() -
+            new Date(a.publishedAt).getTime()
+          );
+        }
+        // 如果只有 a 有 publishedAt，a 排在前面
+        if (a.publishedAt && !b.publishedAt) {
+          return -1;
+        }
+        // 如果只有 b 有 publishedAt，b 排在前面
+        if (!a.publishedAt && b.publishedAt) {
+          return 1;
+        }
+        // 如果都没有 publishedAt，按 createdAt 排序
         return (
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       }
-      // 如果只有 a 有 publishedAt，a 排在前面
-      if (a.publishedAt && !b.publishedAt) {
-        return -1;
-      }
-      // 如果只有 b 有 publishedAt，b 排在前面
-      if (!a.publishedAt && b.publishedAt) {
-        return 1;
-      }
-      // 如果都没有 publishedAt，按 createdAt 排序
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    );
 
     logger.info("Published posts query completed", {
       totalCount,
@@ -749,7 +754,7 @@ export async function searchPostsWithFilters(
         ]);
 
         // 合并相似度信息
-        vectorPosts = filteredVectorPosts.map((post) => {
+        vectorPosts = filteredVectorPosts.map((post: PostWithRelations) => {
           const vectorPost = vectorResult.posts.find((vp) => vp.id === post.id);
           return {
             ...post,
@@ -769,29 +774,38 @@ export async function searchPostsWithFilters(
     );
 
     // 6. 按相关性排序（传统搜索结果优先，然后按相似度）
-    const sortedPosts = uniquePosts.sort((a, b) => {
-      // 传统搜索结果优先
-      const aIsTraditional = traditionalPosts.some((tp) => tp.id === a.id);
-      const bIsTraditional = traditionalPosts.some((tp) => tp.id === b.id);
+    const sortedPosts = uniquePosts.sort(
+      (
+        a: PostWithRelations & { similarity?: number },
+        b: PostWithRelations & { similarity?: number }
+      ) => {
+        // 传统搜索结果优先
+        const aIsTraditional = traditionalPosts.some(
+          (tp: PostWithRelations) => tp.id === a.id
+        );
+        const bIsTraditional = traditionalPosts.some(
+          (tp: PostWithRelations) => tp.id === b.id
+        );
 
-      if (aIsTraditional && !bIsTraditional) return -1;
-      if (!aIsTraditional && bIsTraditional) return 1;
+        if (aIsTraditional && !bIsTraditional) return -1;
+        if (!aIsTraditional && bIsTraditional) return 1;
 
-      // 如果都是向量搜索结果，按相似度排序
-      const aSimilarity =
-        (a as PostWithRelations & { similarity?: number }).similarity || 0;
-      const bSimilarity =
-        (b as PostWithRelations & { similarity?: number }).similarity || 0;
-      if (aSimilarity > 0 || bSimilarity > 0) {
-        return bSimilarity - aSimilarity;
+        // 如果都是向量搜索结果，按相似度排序
+        const aSimilarity =
+          (a as PostWithRelations & { similarity?: number }).similarity || 0;
+        const bSimilarity =
+          (b as PostWithRelations & { similarity?: number }).similarity || 0;
+        if (aSimilarity > 0 || bSimilarity > 0) {
+          return bSimilarity - aSimilarity;
+        }
+
+        // 否则按时间排序
+        return (
+          new Date(b.publishedAt || b.createdAt).getTime() -
+          new Date(a.publishedAt || a.createdAt).getTime()
+        );
       }
-
-      // 否则按时间排序
-      return (
-        new Date(b.publishedAt || b.createdAt).getTime() -
-        new Date(a.publishedAt || a.createdAt).getTime()
-      );
-    });
+    );
 
     const totalCount = traditionalCount + vectorCount;
     const totalPages = Math.ceil(totalCount / pageSize);

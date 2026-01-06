@@ -48,13 +48,21 @@ export async function queryAllTags(
     ]);
 
     // 2️⃣ 数据转换：将 _count.posts 转为 postCount
-    const transformedTags: TagWithPosts[] = tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      slug: tag.slug,
-      createdAt: tag.createdAt,
-      postCount: tag._count.posts,
-    }));
+    const transformedTags: TagWithPosts[] = tags.map(
+      (tag: {
+        id: string;
+        name: string;
+        slug: string;
+        createdAt: Date;
+        _count: { posts: number };
+      }) => ({
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        createdAt: tag.createdAt,
+        postCount: tag._count.posts,
+      })
+    );
 
     // 3️⃣ 计算总页数
     const totalPages = Math.ceil(totalCount / pageSize);
@@ -70,4 +78,3 @@ export async function queryAllTags(
     throw new Error("Failed to fetch tags");
   }
 }
-
