@@ -40,7 +40,10 @@ export const authConfig: NextAuthConfig = {
 
       // 已登录用户访问登录/注册页面，重定向到首页
       if (isLoggedIn && ["/login", "/register"].includes(pathname)) {
-        return Response.redirect(new URL("/", nextUrl));
+        return new Response(null, {
+          status: 302,
+          headers: { Location: "/" },
+        });
       }
 
       // 未登录用户访问受保护页面，重定向到登录页
