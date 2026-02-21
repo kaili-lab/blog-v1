@@ -33,7 +33,7 @@ export async function generateBlogContent(content: string): Promise<string> {
         user: `为这篇博客主题生成摘要："${content}"
 
           要求：
-          1. 字数：100-150字（2-3句清晰的话）
+          1. 字数：50-80字以内（最多3句话，不能更多）
           2. 必须包含：主要概念、关键机制/过程、具体成果
           3. 使用具体、可视化的表达 - 优先使用具体术语而非抽象概念
           4. 提及可触摸的元素，如：系统、流程、转换、关系、组件
@@ -57,7 +57,7 @@ export async function generateBlogContent(content: string): Promise<string> {
         user: `Generate a summary for this blog post topic: "${content}"
 
           Requirements:
-          1. Length: 100-150 words (2-3 clear sentences)
+          1. Length: 50-70 words maximum (2-3 sentences, no more)
           2. Must include: main concept, key mechanisms/processes, concrete outcomes
           3. Use specific, visualizable language - prefer concrete terms over abstractions
           4. Mention tangible elements like: systems, flows, transformations, relationships, components

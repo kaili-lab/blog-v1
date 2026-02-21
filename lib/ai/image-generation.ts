@@ -40,8 +40,8 @@ export async function generateBlogCover(
     const response = await client.images.generate({
       model: "gpt-4o-image",
       prompt,
-      size: "auto", // 16:9 比例
-      quality: "medium",
+      size: "1792x1024", // 16:9 比例
+      quality: "low",
       style: "natural",
       response_format: "b64_json",
       n: 1,
@@ -66,8 +66,9 @@ export async function generateBlogCover(
           folder: "ai-blog/cover-images",
           resource_type: "image",
           transformation: [
+            { width: 1200, crop: "limit" }, // 限制最大宽度，博客封面无需更大
             { quality: "auto:good" },
-            { format: "webp" }, // 使用 WebP 格式优化
+            { format: "webp" },
           ],
         },
         (error, result) =>         {

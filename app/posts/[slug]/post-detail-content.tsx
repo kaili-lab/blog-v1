@@ -49,7 +49,7 @@ export async function PostDetailContent({ post }: PostDetailContentProps) {
     <article className="container mx-auto px-4 py-12 max-w-4xl">
       {/* Cover Image Section */}
       {post.coverImage && (
-        <div className="relative w-full h-[400px] bg-muted rounded-lg overflow-hidden mb-8">
+        <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden mb-8">
           <Image
             src={post.coverImage}
             alt={post.title}
@@ -95,7 +95,7 @@ export async function PostDetailContent({ post }: PostDetailContentProps) {
       </h1>
 
       {/* Brief */}
-      <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+      <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
         {post.brief}
       </p>
 
