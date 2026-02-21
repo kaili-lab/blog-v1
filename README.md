@@ -10,7 +10,7 @@
 
 > A full-stack blog platform where publishing an article triggers a 3-stage AI pipeline to auto-generate a cover image, and search works by semantic similarity — not keywords.
 
-**[🔗 Live Demo](#demo)** · **[中文文档](./README_CN.md)**
+**[🔗 Live Demo](https://blog.kaili.dev)** · **[中文文档](./README_CN.md)**
 
 ---
 
@@ -113,7 +113,7 @@ RateLimit (by userId + action type)
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/blog-v1.git
+git clone https://github.com/kaili-lab/blog-v1.git
 cd blog-v1
 npm install
 ```
@@ -183,5 +183,3 @@ MIT
 
 ---
 
-<a name="demo"></a>
-> **Demo coming soon.** Will be linked here once deployed.

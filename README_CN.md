@@ -10,7 +10,7 @@
 
 > 全栈博客平台：发布文章自动触发三阶段 AI Pipeline 生成封面图，搜索基于向量语义相似度而非关键词匹配。
 
-**[🔗 在线 Demo](#demo)** · **[English](./README.md)**
+**[🔗 在线 Demo](https://blog.kaili.dev)** · **[English](./README.md)**
 
 ---
 
@@ -113,7 +113,7 @@ RateLimit（按 userId + 操作类型）
 ### 安装
 
 ```bash
-git clone https://github.com/your-username/blog-v1.git
+git clone https://github.com/kaili-lab/blog-v1.git
 cd blog-v1
 npm install
 ```
@@ -183,5 +183,3 @@ MIT
 
 ---
 
-<a name="demo"></a>
-> **在线 Demo 即将上线。** 部署完成后将在此处添加链接。
