@@ -1,4 +1,4 @@
-import { Briefcase, FileText, Github } from "lucide-react";
+import { Briefcase, FileText, Github, Linkedin } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /**
@@ -10,9 +10,9 @@ export const socialLinks = {
     url: "https://github.com/kaili-lab",
     label: "GitHub",
   },
-  twitter: {
-    url: "https://x.com/kaili_dev",
-    label: "Twitter",
+  linkedin: {
+    url: "https://www.linkedin.com/in/kai-li-696024230/",
+    label: "LinkedIn",
   },
 } as const;
 
@@ -20,8 +20,8 @@ export const socialLinks = {
  * 个人信息配置
  */
 export const profileConfig = {
-  title: "Full-Stack Developer",
-  description: "Build scalable products with React/Next.js and Java/Node.js",
+  title: "Full-Stack Developer & AI Engineer",
+  description: "Java backend roots, TypeScript full-stack, and AI Agent development",
   portfolioUrl: "https://kaili.dev",
   portfolioLabel: "View Full Portfolio",
 } as const;
@@ -31,27 +31,30 @@ export const profileConfig = {
  */
 export const aboutContent = {
   paragraph1:
-    "Full-stack engineer with 5 years of experience: Frontend—React ecosystem, Next.js; Backend—Java, Node.js. Hands-on with Redis, MySQL/PostgreSQL/Oracle, Kafka, Socket.IO.",
+    "Full-Stack Developer with 5+ years of experience — Java backend roots, TypeScript full-stack, and AI Agent development. Hands-on with Spring Boot, Next.js, React, and data infrastructure including PostgreSQL, MySQL, Redis, and Kafka.",
   paragraph2:
-    "Performance-minded, maintainable code, remote-ready and open to roles.",
+    "I ship products efficiently using AI tooling while keeping engineering fundamentals solid. Remote-ready and open to new roles.",
 } as const;
 
 /**
  * 技能标签列表
  */
 export const skills = [
-  "Full-Stack Development",
   "Java",
-  "Node.js",
+  "TypeScript",
   "JavaScript",
-  "React",
+  "Spring Boot",
   "Next.js",
+  "React",
   "Express.js",
-  "Socket.IO",
-  "Redis",
-  "MySQL",
+  "Hono",
+  "LangChain",
+  "Vercel AI SDK",
+  "OpenAI API",
+  "Vector Search",
   "PostgreSQL",
-  "Oracle",
+  "MySQL",
+  "Redis",
   "Kafka",
   "English (Working Proficiency)",
   "Remote Collaboration",
@@ -86,6 +89,13 @@ export const quickLinks: QuickLink[] = [
     description: "Check out my code",
     icon: Github,
     href: socialLinks.github.url,
+    external: true,
+  },
+  {
+    title: "LinkedIn",
+    description: "Connect with me professionally",
+    icon: Linkedin,
+    href: socialLinks.linkedin.url,
     external: true,
   },
 ];

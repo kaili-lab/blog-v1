@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Twitter } from "lucide-react";
+import { Github, Linkedin } from "lucide-react";
 import { socialLinks } from "@/lib/config/about";
 
 export function Footer() {
@@ -38,13 +38,13 @@ export function Footer() {
               <Github className="w-5 h-5" />
             </Link>
             <Link
-              href={socialLinks.twitter.url}
+              href={socialLinks.linkedin.url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={socialLinks.twitter.label}
+              aria-label={socialLinks.linkedin.label}
             >
-              <Twitter className="w-5 h-5" />
+              <Linkedin className="w-5 h-5" />
             </Link>
           </div>
         </div>

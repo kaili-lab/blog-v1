@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Github, Twitter, ExternalLink } from "lucide-react";
+import { Github, Linkedin, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { getAdminUser } from "@/lib/db-access/user";
 import { getInitials } from "@/lib/utils";
@@ -97,13 +97,13 @@ export default async function AboutPage() {
                       <Github className="w-5 h-5" aria-hidden="true" />
                     </Link>
                     <Link
-                      href={socialLinks.twitter.url}
+                      href={socialLinks.linkedin.url}
                       className="text-muted-foreground hover:text-primary transition-colors"
-                      aria-label={socialLinks.twitter.label}
+                      aria-label={socialLinks.linkedin.label}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Twitter className="w-5 h-5" aria-hidden="true" />
+                      <Linkedin className="w-5 h-5" aria-hidden="true" />
                     </Link>
                   </div>
 
