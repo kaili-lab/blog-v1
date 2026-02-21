@@ -1,11 +1,12 @@
 // 概念插画（Conceptual Illustration），就像 Medium、Smashing Magazine 那种 - 有具体内容但保持插画风格的封面图。
 export const generatePrompt = (summary: string, category: string) => {
   const style = `
-    Contemporary editorial illustration in modern flat design style,
-    professional tech publication aesthetic,
-    clean composition with clear focal point,
-    appealing color harmony with 4-5 main colors,
-    digital art quality similar to top design agencies,
+    Warm hand-drawn flat cartoon illustration style,
+    cream or warm beige background with orange and teal-green accent colors,
+    outlined doodle-style icons and small cartoon characters (people or robots),
+    semi-hand-drawn aesthetic with visible strokes and slightly organic lines,
+    warm muted earthy color palette (cream, soft orange, sage green, warm teal),
+    educational infographic feel with clear visual storytelling,
   `
     .trim()
     .replace(/\s+/g, " ");
