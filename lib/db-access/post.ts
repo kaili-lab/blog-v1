@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { logger } from "../logger";
 import { auth } from "@/auth";
 import { searchPosts } from "../actions/post-embedding";
+import { inngest } from "../inngest/client";
 
 // 博客文章类型（包含关联数据）
 export type PostWithRelations = {
@@ -250,6 +251,7 @@ export async function queryPublishedPosts(
       OR?: Array<
         | { title: { contains: string; mode: "insensitive" } }
         | { brief: { contains: string; mode: "insensitive" } }
+        | { content: { contains: string; mode: "insensitive" } }
       >;
       category?: { slug: string };
       tags?: { some: { slug: string } };
@@ -257,11 +259,12 @@ export async function queryPublishedPosts(
       published: true,
     };
 
-    // 搜索关键词
+    // 搜索关键词：title、brief、content 三字段（与混合搜索保持一致）
     if (searchTerm) {
       whereCondition.OR = [
         { title: { contains: searchTerm, mode: "insensitive" as const } },
         { brief: { contains: searchTerm, mode: "insensitive" as const } },
+        { content: { contains: searchTerm, mode: "insensitive" as const } },
       ];
     }
 
@@ -282,12 +285,16 @@ export async function queryPublishedPosts(
     }
 
     // 并行查询：文章列表 + 总数
+    // 排序：publishedAt DESC NULLS LAST（有发布时间的文章优先），再按 createdAt DESC 兜底
     const [posts, totalCount] = await Promise.all([
       prisma.post.findMany({
         where: whereCondition,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { publishedAt: { sort: "desc", nulls: "last" } },
+          { createdAt: "desc" },
+        ],
         include: {
           category: {
             select: {
@@ -317,31 +324,6 @@ export async function queryPublishedPosts(
 
     const totalPages = Math.ceil(totalCount / pageSize);
 
-    // 手动排序：优先按 publishedAt，然后按 createdAt
-    const sortedPosts = posts.sort(
-      (a: PostWithRelations, b: PostWithRelations) => {
-        // 如果两个都有 publishedAt，按 publishedAt 排序
-        if (a.publishedAt && b.publishedAt) {
-          return (
-            new Date(b.publishedAt).getTime() -
-            new Date(a.publishedAt).getTime()
-          );
-        }
-        // 如果只有 a 有 publishedAt，a 排在前面
-        if (a.publishedAt && !b.publishedAt) {
-          return -1;
-        }
-        // 如果只有 b 有 publishedAt，b 排在前面
-        if (!a.publishedAt && b.publishedAt) {
-          return 1;
-        }
-        // 如果都没有 publishedAt，按 createdAt 排序
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
-    );
-
     logger.info("Published posts query completed", {
       totalCount,
       totalPages,
@@ -351,7 +333,7 @@ export async function queryPublishedPosts(
 
     return {
       success: true,
-      posts: sortedPosts as PostWithRelations[],
+      posts: posts as PostWithRelations[],
       totalPages,
       currentPage: page,
       totalCount,
@@ -651,7 +633,7 @@ export async function searchPostsWithFilters(
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: onlyPublished
-          ? { publishedAt: "desc" }
+          ? [{ publishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }]
           : { createdAt: "desc" },
         include: {
           category: {
@@ -684,7 +666,6 @@ export async function searchPostsWithFilters(
     const needsVectorSearch = traditionalPosts.length < pageSize * 0.8; // 如果传统搜索结果不足80%
 
     let vectorPosts: PostWithRelations[] = [];
-    let vectorCount = 0;
 
     if (needsVectorSearch) {
       // 3. 执行向量搜索
@@ -720,38 +701,35 @@ export async function searchPostsWithFilters(
           vectorWhereCondition.tags = { some: { slug: tagSlug } };
         }
 
-        const [filteredVectorPosts, filteredVectorCount] = await Promise.all([
-          prisma.post.findMany({
-            where: vectorWhereCondition,
-            include: {
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                },
-              },
-              author: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
-              },
-              tags: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                },
+        const filteredVectorPosts = await prisma.post.findMany({
+          where: vectorWhereCondition,
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
               },
             },
-            orderBy: onlyPublished
-              ? { publishedAt: "desc" }
-              : { createdAt: "desc" },
-          }),
-          prisma.post.count({ where: vectorWhereCondition }),
-        ]);
+            author: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+            tags: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+          orderBy: onlyPublished
+            ? [{ publishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }]
+            : { createdAt: "desc" },
+        });
 
         // 合并相似度信息
         vectorPosts = filteredVectorPosts.map((post: PostWithRelations) => {
@@ -762,9 +740,37 @@ export async function searchPostsWithFilters(
             snippet: vectorPost?.snippet || post.brief,
           };
         });
-
-        vectorCount = filteredVectorCount;
       }
+    }
+
+    // 4.5 如果向量搜索结果为空，检测传统搜索结果中缺少 embedding 的文章，异步触发补充生成
+    if (needsVectorSearch && vectorPosts.length === 0 && traditionalPosts.length > 0) {
+      const postIds = traditionalPosts.map((p) => p.id);
+      // 单次查询获取已有 embedding 的文章 ID，避免 N+1 查询
+      Promise.resolve()
+        .then(async () => {
+          const existingEmbeddings = await prisma.postEmbedding.findMany({
+            where: { postId: { in: postIds } },
+            select: { postId: true },
+            distinct: ["postId"],
+          });
+          const existingIds = new Set(existingEmbeddings.map((e) => e.postId));
+          const missingIds = postIds.filter((id) => !existingIds.has(id));
+
+          if (missingIds.length > 0) {
+            logger.info("Detected posts missing embeddings, triggering generation", {
+              missingIds,
+            });
+            await Promise.all(
+              missingIds.map((postId) =>
+                inngest.send({ name: "post/embedding.generate", data: { postId } })
+              )
+            );
+          }
+        })
+        .catch((err) =>
+          logger.error("Failed to trigger missing embedding generation", { err })
+        );
     }
 
     // 5. 合并结果并去重
@@ -807,7 +813,11 @@ export async function searchPostsWithFilters(
       }
     );
 
-    const totalCount = traditionalCount + vectorCount;
+    // 只将向量搜索中「传统搜索未命中」的文章计入总数，避免重复计数
+    const uniqueVectorOnlyCount = vectorPosts.filter(
+      (vp) => !traditionalPosts.some((tp) => tp.id === vp.id)
+    ).length;
+    const totalCount = traditionalCount + uniqueVectorOnlyCount;
     const totalPages = Math.ceil(totalCount / pageSize);
 
     return {

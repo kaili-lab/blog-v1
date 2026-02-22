@@ -164,10 +164,42 @@ npx prisma migrate deploy
 
 # 启动开发服务器
 npm run dev
-
-# （可选）启动 Inngest 开发服务器
-npm run inngest
 ```
+
+### Inngest 配置（AI 功能必需）
+
+本项目使用 [Inngest](https://inngest.com) 运行两个后台任务：
+
+| 函数 | 触发时机 | 缺失时的影响 |
+|------|---------|-------------|
+| `process-embedding` | 发布文章时 | 语义搜索无结果 |
+| `cleanup-rate-limit-records` | 每周定时 | 过期频率限制记录在数据库中堆积 |
+
+**本地开发 — 新开一个终端运行：**
+
+```bash
+npm run inngest
+# 启动 Inngest Dev Server，自动连接到 http://localhost:3000/api/inngest
+```
+
+Dev Server 会在 `http://localhost:8288` 打开一个 UI，可以查看和重放函数执行记录。本地开发无需注册账号。
+
+**生产环境（Vercel）— 一次性配置：**
+
+1. 在 [inngest.com](https://inngest.com) 注册并创建应用
+2. 在 Inngest 控制台 → **Apps** → **Sync App**，填入已部署的地址：
+   ```
+   https://your-domain.com/api/inngest
+   ```
+3. 从控制台复制 **Event Key** 和 **Signing Key**
+4. 在 Vercel 环境变量中填入：
+   ```
+   INNGEST_EVENT_KEY=...
+   INNGEST_SIGNING_KEY=...
+   ```
+5. 重新部署 — Inngest 会自动发现并注册这两个函数
+
+> 如果生产环境未配置 Inngest，发布文章仍可成功，但不会生成封面图，也不会建立向量索引，语义搜索将返回空结果。
 
 ### 运行测试
 

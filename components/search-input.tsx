@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 import { Search } from "lucide-react";
 
 interface SearchInputProps {
@@ -47,15 +48,26 @@ export default function SearchInput({
   };
 
   return (
-    <div className={cn("relative", className)}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-      <Input
-        placeholder="Search articles..."
-        className="pl-10 bg-input border-border"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyDown}
-      />
+    <div className={cn("flex gap-2", className)}>
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search articles..."
+          className="pl-10 bg-input border-border"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
+      <Button
+        type="button"
+        variant="default"
+        size="sm"
+        onClick={handleSearch}
+        aria-label="Search"
+      >
+        Search
+      </Button>
     </div>
   );
 }

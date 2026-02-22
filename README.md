@@ -164,10 +164,42 @@ npx prisma migrate deploy
 
 # Start dev server
 npm run dev
-
-# (Optional) Start Inngest dev server for background jobs
-npm run inngest
 ```
+
+### Inngest Setup (Required for AI features)
+
+This project uses [Inngest](https://inngest.com) to run two background jobs:
+
+| Function | Trigger | Effect if missing |
+|----------|---------|-------------------|
+| `process-embedding` | Publishing a post | Semantic search returns no results |
+| `cleanup-rate-limit-records` | Weekly cron | Stale rate-limit rows accumulate in DB |
+
+**Local development — run in a second terminal:**
+
+```bash
+npm run inngest
+# Starts the Inngest Dev Server and connects it to http://localhost:3000/api/inngest
+```
+
+The Dev Server opens a UI at `http://localhost:8288` where you can inspect and replay function runs. No account is needed for local development.
+
+**Production (Vercel) — one-time setup:**
+
+1. Sign up at [inngest.com](https://inngest.com) and create an app
+2. In the Inngest dashboard → **Apps** → **Sync App**, enter your deployed URL:
+   ```
+   https://your-domain.com/api/inngest
+   ```
+3. Copy **Event Key** and **Signing Key** from the dashboard
+4. Add them to your Vercel environment variables:
+   ```
+   INNGEST_EVENT_KEY=...
+   INNGEST_SIGNING_KEY=...
+   ```
+5. Redeploy — Inngest will automatically discover and register the two functions
+
+> Without Inngest configured in production, publishing a post will still succeed but no cover image will be generated and no embeddings will be indexed, so semantic search will return empty results.
 
 ### Run Tests
 
