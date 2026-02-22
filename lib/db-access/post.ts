@@ -521,27 +521,16 @@ function getSmartSimilarityThreshold(
 
   // 检测语言类型
   const isChinese = /[\u4e00-\u9fff]/.test(searchQuery);
-  const isEnglish = /^[a-zA-Z\s]+$/.test(searchQuery);
 
   // 根据语言和查询长度智能选择阈值
   if (isChinese) {
     if (searchQuery.length <= 2) {
       return 0.2; // 中文短词
-    } else if (searchQuery.length <= 4) {
-      return 0.3; // 中文短语
     } else {
-      return 0.4; // 中文长句
-    }
-  } else if (isEnglish) {
-    if (searchQuery.length <= 3) {
-      return 0.4; // 英文短词
-    } else if (searchQuery.length <= 10) {
-      return 0.5; // 英文短语
-    } else {
-      return 0.6; // 英文长句
+      return 0.4; // 中文短语/长句
     }
   } else {
-    return 0.3; // 混合语言或未知
+    return 0.4; // 英文、混合语言或未知
   }
 }
 

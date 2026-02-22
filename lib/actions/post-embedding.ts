@@ -100,10 +100,10 @@ export async function searchPosts(
 ) {
   const {
     limit = 10,
-    minSimilarity = 0.5,
+    minSimilarity = 0.4,
     page = 1,
     onlyPublished = true,
-  } = options; // 临时降低到 0.3 进行测试
+  } = options;
 
   try {
     // 1. Generate query embedding
