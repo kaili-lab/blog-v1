@@ -3,8 +3,7 @@ import "server-only";
 import { prisma } from "../db";
 import { logger } from "../logger";
 import { auth } from "@/auth";
-import { searchPosts } from "../actions/post-embedding";
-import { inngest } from "../inngest/client";
+import { searchPosts, generatePostEmbeddings } from "../actions/post-embedding";
 
 // 博客文章类型（包含关联数据）
 export type PostWithRelations = {
@@ -746,7 +745,7 @@ export async function searchPostsWithFilters(
     // 4.5 如果向量搜索结果为空，检测传统搜索结果中缺少 embedding 的文章，异步触发补充生成
     if (needsVectorSearch && vectorPosts.length === 0 && traditionalPosts.length > 0) {
       const postIds = traditionalPosts.map((p) => p.id);
-      // 单次查询获取已有 embedding 的文章 ID，避免 N+1 查询
+      // 单次查询获取已有 embedding 的文章 ID，避免 N+1 查询，fire-and-forget
       Promise.resolve()
         .then(async () => {
           const existingEmbeddings = await prisma.postEmbedding.findMany({
@@ -755,15 +754,21 @@ export async function searchPostsWithFilters(
             distinct: ["postId"],
           });
           const existingIds = new Set(existingEmbeddings.map((e) => e.postId));
-          const missingIds = postIds.filter((id) => !existingIds.has(id));
+          const postsWithoutEmbeddings = traditionalPosts.filter(
+            (p) => !existingIds.has(p.id)
+          );
 
-          if (missingIds.length > 0) {
+          if (postsWithoutEmbeddings.length > 0) {
             logger.info("Detected posts missing embeddings, triggering generation", {
-              missingIds,
+              missingIds: postsWithoutEmbeddings.map((p) => p.id),
             });
             await Promise.all(
-              missingIds.map((postId) =>
-                inngest.send({ name: "post/embedding.generate", data: { postId } })
+              postsWithoutEmbeddings.map((post) =>
+                generatePostEmbeddings({
+                  id: post.id,
+                  title: post.title,
+                  content: post.content,
+                })
               )
             );
           }

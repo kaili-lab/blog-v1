@@ -4,7 +4,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { inngest } from "@/lib/inngest/client";
+import { generatePostEmbeddings } from "@/lib/actions/post-embedding";
 
 // 测试文章数据
 const testPosts = [
@@ -208,10 +208,11 @@ async function createTestData() {
           },
         });
 
-        // 手动触发 inngest 事件来处理嵌入向量生成
-        await inngest.send({
-          name: "post/embedding.generate",
-          data: { postId: post.id },
+        // 直接调用生成 embedding
+        await generatePostEmbeddings({
+          id: post.id,
+          title: post.title,
+          content: post.content,
         });
 
         createdPosts.push({
@@ -273,8 +274,7 @@ async function createTestData() {
     });
 
     console.log("\n🎯 下一步操作:");
-    console.log("1. 等待 2-3 分钟让嵌入向量生成完成");
-    console.log("2. 运行: npm run test:report");
+    console.log("1. 运行: npm run test:report");
     console.log("3. 访问 /posts 页面测试搜索功能");
     console.log("4. 尝试搜索: 摇床, 机器学习, AI, machine learning");
     console.log("5. 检查搜索结果是否包含相关文章");

@@ -9,6 +9,7 @@ import {
   insertEmbedding,
   batchInsertEmbeddings,
   searchSimilarEmbeddings,
+  deleteEmbeddingsByPostId,
 } from "../vector";
 import { prisma } from "../db";
 import { logger } from "../logger";
@@ -185,5 +186,18 @@ export async function searchPosts(
       totalPages: 0,
       searchQuery: query,
     };
+  }
+}
+
+/**
+ * 删除文章的所有 embeddings（更新文章时先清理旧数据）
+ */
+export async function deletePostEmbeddings(postId: string) {
+  try {
+    await deleteEmbeddingsByPostId(postId);
+    logger.info("Post embeddings deleted", { postId });
+  } catch (error) {
+    logger.error("Failed to delete post embeddings", error);
+    throw error;
   }
 }

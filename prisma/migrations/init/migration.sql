@@ -1,3 +1,6 @@
+-- EnableExtension
+CREATE EXTENSION IF NOT EXISTS "vector";
+
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 

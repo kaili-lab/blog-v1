@@ -22,7 +22,7 @@
 ## ✨ 核心亮点
 
 ### 三阶段 AI 封面生成 Pipeline
-发布文章时触发 Inngest 后台任务，按顺序执行三个步骤：GPT-4o-mini 生成 100–150 字摘要（自动识别中英文）、GPT-4o 将摘要转换为优化后的图像生成 prompt、`gpt-4o-image` 生成封面并以 WebP 格式上传至 Cloudinary。整个流程完全异步执行，任意步骤失败自动重试，发布操作本身立即返回，不受影响。
+发布文章时通过 Next.js `after()` API 触发异步 pipeline，按顺序执行三个步骤：GPT-4o-mini 生成 100–150 字摘要（自动识别中英文）、GPT-4o 将摘要转换为优化后的图像生成 prompt、`gpt-4o-image` 生成封面并以 WebP 格式上传至 Cloudinary。整个流程在响应返回客户端后异步执行，发布操作本身立即返回，不受影响。
 
 ### pgvector 语义搜索
 文章在发布时按段落边界分块处理——每块最多 8,191 个 token，相邻块保留 50 个 token 的重叠以保持上下文连贯性。每个分块通过 OpenAI `text-embedding-3-small` 生成 1536 维向量，存储在 PostgreSQL 的 `pgvector` 扩展中。搜索时对查询文本实时嵌入，按余弦相似度匹配，返回语义相关结果，而非简单关键词匹配。
@@ -43,7 +43,7 @@
 | ORM | Prisma 6 |
 | 认证 | NextAuth v5 beta（JWT 策略）|
 | AI | OpenAI API（GPT-4o、GPT-4o-mini、text-embedding-3-small）|
-| 后台任务 | Inngest |
+| 异步任务 | Next.js `after()` API |
 | 图片存储 | Cloudinary |
 | 缓存 / 频率限制 | Vercel KV（Redis）|
 | 邮件 | Resend |
@@ -82,7 +82,7 @@
 
 **Neon Serverless 适配器** — Prisma 配置了 `@prisma/adapter-neon`，在 Vercel serverless 环境下实现正确的连接池管理。
 
-**Inngest 持久化工作流** — 封面生成 pipeline 和向量索引均作为持久化后台函数运行。任意步骤失败时自动重试，不影响用户侧的发布请求。
+**Next.js `after()` 异步任务** — 封面生成 pipeline 和向量索引在响应返回客户端后异步执行，发布操作不被阻塞。
 
 **安全配置** — `next.config.ts` 全局设置 `X-Frame-Options: DENY` 和 `X-Content-Type-Options: nosniff`，生产环境构建时自动移除 `console.log`。
 
@@ -143,9 +143,8 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-# 后台任务
-INNGEST_EVENT_KEY=
-INNGEST_SIGNING_KEY=
+# Vercel Cron 鉴权
+CRON_SECRET=
 
 # 缓存与频率限制
 KV_URL=
@@ -166,40 +165,11 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-### Inngest 配置（AI 功能必需）
+### Vercel Cron Job 配置
 
-本项目使用 [Inngest](https://inngest.com) 运行两个后台任务：
+项目通过 `/api/cron/cleanup-rate-limits` 每周清理过期的频率限制记录，由 `CRON_SECRET` 鉴权。
 
-| 函数 | 触发时机 | 缺失时的影响 |
-|------|---------|-------------|
-| `process-embedding` | 发布文章时 | 语义搜索无结果 |
-| `cleanup-rate-limit-records` | 每周定时 | 过期频率限制记录在数据库中堆积 |
-
-**本地开发 — 新开一个终端运行：**
-
-```bash
-npm run inngest
-# 启动 Inngest Dev Server，自动连接到 http://localhost:3000/api/inngest
-```
-
-Dev Server 会在 `http://localhost:8288` 打开一个 UI，可以查看和重放函数执行记录。本地开发无需注册账号。
-
-**生产环境（Vercel）— 一次性配置：**
-
-1. 在 [inngest.com](https://inngest.com) 注册并创建应用
-2. 在 Inngest 控制台 → **Apps** → **Sync App**，填入已部署的地址：
-   ```
-   https://your-domain.com/api/inngest
-   ```
-3. 从控制台复制 **Event Key** 和 **Signing Key**
-4. 在 Vercel 环境变量中填入：
-   ```
-   INNGEST_EVENT_KEY=...
-   INNGEST_SIGNING_KEY=...
-   ```
-5. 重新部署 — Inngest 会自动发现并注册这两个函数
-
-> 如果生产环境未配置 Inngest，发布文章仍可成功，但不会生成封面图，也不会建立向量索引，语义搜索将返回空结果。
+在 Vercel 环境变量中添加 `CRON_SECRET`（任意随机字符串即可）。定时规则定义在 `vercel.json` 中，每周一凌晨 0 点（UTC）执行。
 
 ### 运行测试
 

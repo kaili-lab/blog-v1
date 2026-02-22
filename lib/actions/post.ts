@@ -1,10 +1,14 @@
 "use server";
 
+import { after } from "next/server";
 import { prisma } from "../db";
 import { PostFormData, postSchema } from "../zod-validations";
 import { logger } from "../logger";
 import { auth } from "@/auth";
-import { inngest } from "../inngest/client";
+import {
+  generatePostEmbeddings,
+  deletePostEmbeddings,
+} from "./post-embedding";
 
 // 重新导出类型以便向后兼容
 export type { PostWithRelations } from "../db-access/post";
@@ -130,22 +134,19 @@ export async function createPost(data: PostFormData) {
       title: newPost.title,
     });
 
-    // 创建文章后，触发 embedding 生成
-    try {
-      // 这里是向Inngest服务发送一个事件，相当于"触发信号"
-      // 然后由Inngest云服务，向当前应用的/api/inngest端点发出HTTP请求
-      await inngest.send({
-        name: "post/embedding.generate",
-        data: { postId: newPost.id },
-      });
-      logger.info("Embedding generation triggered", { postId: newPost.id });
-    } catch (inngestError) {
-      // 不要因为 Inngest 失败而让整个创建失败
-      logger.error("Failed to trigger embedding generation", {
-        postId: newPost.id,
-        error: inngestError,
-      });
-    }
+    // 文章保存成功后，在响应返回给客户端之后异步生成 embedding
+    after(async () => {
+      try {
+        await generatePostEmbeddings({
+          id: newPost.id,
+          title: newPost.title,
+          content: newPost.content,
+        });
+        logger.info("Embeddings generated successfully", { postId: newPost.id });
+      } catch (err) {
+        logger.error("Failed to generate embeddings after post creation", err);
+      }
+    });
 
     return {
       success: true,
@@ -274,6 +275,21 @@ export async function updatePost(data: PostFormData, postId: string) {
     logger.info("Post updated successfully", {
       id: updatedPost.id,
       title: updatedPost.title,
+    });
+
+    // 文章内容变更后，重新生成 embedding（先删旧的，再建新的）
+    after(async () => {
+      try {
+        await deletePostEmbeddings(updatedPost.id);
+        await generatePostEmbeddings({
+          id: updatedPost.id,
+          title: updatedPost.title,
+          content: updatedPost.content,
+        });
+        logger.info("Embeddings regenerated successfully", { postId: updatedPost.id });
+      } catch (err) {
+        logger.error("Failed to regenerate embeddings after post update", err);
+      }
     });
 
     return {

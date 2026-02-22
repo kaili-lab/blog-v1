@@ -108,7 +108,7 @@ Dashboard 不检查是否登录（依赖路由层的 admin 鉴权），只要有
 向量搜索结果再经过 Prisma 重新过滤（应用 `categorySlug`、`tagSlug`）后与传统结果合并。
 
 #### Step 4.5 — Embedding 缺失自动补偿
-当向量搜索返回空结果时，系统会异步检测传统搜索结果中缺少 embedding 的文章，并通过 Inngest 触发 `post/embedding.generate` 事件补充生成。该步骤为异步 fire-and-forget，不阻塞当前搜索响应。
+当向量搜索返回空结果时，系统检测传统搜索结果中缺少 embedding 的文章，直接调用 `generatePostEmbeddings()` 补充生成。该步骤为 fire-and-forget（不 await），不阻塞当前搜索响应。
 
 #### Step 5 — 合并去重
 将传统结果和向量结果按 `post.id` 去重合并。
@@ -125,9 +125,9 @@ Dashboard 不检查是否登录（依赖路由层的 admin 鉴权），只要有
 
 ## Embedding 生命周期
 
-1. **创建文章**时，`lib/actions/post.ts` 通过 Inngest 发送 `post/embedding.generate` 事件
-2. Inngest 函数（`lib/inngest/functions.ts`）异步调用 `generatePostEmbeddings()`，对 `title` 和 `content` 生成 embedding 并存入 `post_embeddings` 表
-3. 若 Inngest 任务失败（最多重试 3 次），文章将缺少 embedding；下次被传统搜索命中时，Step 4.5 会自动触发补充生成
+1. **创建/更新文章**时，`lib/actions/post.ts` 使用 Next.js `after()` API（`next/server`）在响应返回客户端后异步触发 `generatePostEmbeddings()`
+2. `generatePostEmbeddings()` 对 `title` 和 `content` 生成 embedding 并存入 `post_embeddings` 表
+3. 若 embedding 生成失败，文章将缺少 embedding；下次被传统搜索命中时，Step 4.5 会自动触发补充生成
 
 ---
 

@@ -22,7 +22,7 @@
 ## ✨ Highlights
 
 ### 3-Stage AI Cover Generation Pipeline
-Publishing an article fires an Inngest background job that runs three sequential steps: GPT-4o-mini summarizes the article (with automatic language detection for Chinese and English), GPT-4o translates the summary into an optimized image generation prompt, then `gpt-4o-image` generates the cover and uploads it to Cloudinary in WebP format. The pipeline is fully async and retries failed steps automatically — the publish action returns immediately.
+Publishing an article fires an async pipeline via Next.js `after()` that runs three sequential steps: GPT-4o-mini summarizes the article (with automatic language detection for Chinese and English), GPT-4o translates the summary into an optimized image generation prompt, then `gpt-4o-image` generates the cover and uploads it to Cloudinary in WebP format. The pipeline runs after the response is returned to the client — the publish action completes immediately.
 
 ### Semantic Search via pgvector
 Articles are chunked by paragraph boundaries before indexing — 8,191-token limit per chunk with a 50-token overlap to preserve context. Each chunk is embedded using OpenAI's `text-embedding-3-small` into a 1536-dimensional vector stored in PostgreSQL via `pgvector`. Search queries are embedded at runtime and matched by cosine similarity, returning conceptually relevant results rather than keyword matches.
@@ -43,7 +43,7 @@ Rate limits for comments and password resets are enforced through two layers: Ve
 | ORM | Prisma 6 |
 | Auth | NextAuth v5 beta (JWT strategy) |
 | AI | OpenAI API (GPT-4o, GPT-4o-mini, text-embedding-3-small) |
-| Background Jobs | Inngest |
+| Async Tasks | Next.js `after()` API |
 | Image Storage | Cloudinary |
 | Cache / Rate Limit | Vercel KV (Redis) |
 | Email | Resend |
@@ -82,7 +82,7 @@ Custom renderer built on `marked` + `Prism.js`:
 
 **Neon Serverless adapter** — Prisma is configured with `@prisma/adapter-neon` for connection pooling that works correctly in Vercel's serverless environment.
 
-**Inngest for durable workflows** — The cover generation pipeline and embedding indexing run as durable background functions. Failed steps retry automatically without blocking the publish request.
+**Next.js `after()` for async tasks** — The cover generation pipeline and embedding indexing run after the response is sent to the client, keeping publish actions fast without blocking the user.
 
 **Security headers** — `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff` are set globally in `next.config.ts`. Console logs are stripped from production builds.
 
@@ -143,9 +143,8 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-# Background jobs
-INNGEST_EVENT_KEY=
-INNGEST_SIGNING_KEY=
+# Vercel Cron Job auth
+CRON_SECRET=
 
 # Cache & rate limiting
 KV_URL=
@@ -166,40 +165,11 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-### Inngest Setup (Required for AI features)
+### Vercel Cron Job Setup
 
-This project uses [Inngest](https://inngest.com) to run two background jobs:
+A weekly cron job (`/api/cron/cleanup-rate-limits`) deletes expired rate-limit records. It is secured with a `CRON_SECRET` header verified by the route handler.
 
-| Function | Trigger | Effect if missing |
-|----------|---------|-------------------|
-| `process-embedding` | Publishing a post | Semantic search returns no results |
-| `cleanup-rate-limit-records` | Weekly cron | Stale rate-limit rows accumulate in DB |
-
-**Local development — run in a second terminal:**
-
-```bash
-npm run inngest
-# Starts the Inngest Dev Server and connects it to http://localhost:3000/api/inngest
-```
-
-The Dev Server opens a UI at `http://localhost:8288` where you can inspect and replay function runs. No account is needed for local development.
-
-**Production (Vercel) — one-time setup:**
-
-1. Sign up at [inngest.com](https://inngest.com) and create an app
-2. In the Inngest dashboard → **Apps** → **Sync App**, enter your deployed URL:
-   ```
-   https://your-domain.com/api/inngest
-   ```
-3. Copy **Event Key** and **Signing Key** from the dashboard
-4. Add them to your Vercel environment variables:
-   ```
-   INNGEST_EVENT_KEY=...
-   INNGEST_SIGNING_KEY=...
-   ```
-5. Redeploy — Inngest will automatically discover and register the two functions
-
-> Without Inngest configured in production, publishing a post will still succeed but no cover image will be generated and no embeddings will be indexed, so semantic search will return empty results.
+Add `CRON_SECRET` to your Vercel environment variables (any random string). The schedule is defined in `vercel.json` and runs every Monday at midnight UTC.
 
 ### Run Tests
 

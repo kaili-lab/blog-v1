@@ -12,7 +12,6 @@
     "test:watch": "vitest",
     "test:create": "npx tsx scripts/create-test-posts.ts",
     "test:report": "npx tsx scripts/generate-test-report.ts",
-    "inngest": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -33,7 +32,6 @@
     "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "inngest": "^3.47.0",
     "lucide-react": "^0.544.0",
     "marked": "^16.4.2",
     "next": "16.0.7",
