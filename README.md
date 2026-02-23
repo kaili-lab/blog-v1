@@ -14,8 +14,18 @@
 
 ---
 
-<!-- SCREENSHOT: Record a 5–8s GIF showing: type a query in the search bar → semantic results appear → click an article → AI-generated cover is visible at the top. Save to public/demo.gif and replace this comment with: ![Demo](./public/demo.gif) -->
-> **Screenshot pending** — will be added after deployment.
+<p align="center">
+  <img src="./screenshots/home.png" width="800" alt="Home page" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/dashboard.png" width="800" alt="Dashboard" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/ai-search.png" height="420" alt="Semantic search" />
+  <img src="./screenshots/create-post.png" height="420" alt="Create post" />
+</p>
 
 ---
 

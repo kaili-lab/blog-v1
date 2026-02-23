@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { CommentWithAuthor, getAllComments } from "@/lib/db-access/comment";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,8 @@ import Link from "next/link";
 import { CommentActions } from "@/app/dashboard/comments/comment-actions";
 
 export default async function CommentsPage() {
+  await connection();
+
   const result = await getAllComments();
 
   if (!result.success) {

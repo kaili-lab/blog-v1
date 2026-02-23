@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { getDashboardStats, getRecentPosts } from "@/lib/db-access/post";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -5,7 +6,9 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default async function DashboardPage() {
-  // 并行获取统计数据和新文章
+  // 确保每次请求都从数据库读取最新数据，不走 Next.js 缓存
+  await connection();
+
   const [statsResult, recentPostsResult] = await Promise.all([
     getDashboardStats(),
     getRecentPosts(5),

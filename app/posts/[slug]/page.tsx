@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer";
 import { PostDetailSkeleton } from "@/components/post-detail-skeleton";
 import { PostDetailContent } from "./post-detail-content";
 
-// 🚀 优化 1：添加 ISR 缓存配置（1小时重新验证）
+// ISR：1 小时重新验证
 export const revalidate = 3600;
 
 /**

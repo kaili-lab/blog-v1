@@ -14,8 +14,18 @@
 
 ---
 
-<!-- SCREENSHOT: 录制一段 5–8 秒的 GIF，展示：在搜索框输入关键词 → 语义搜索结果出现 → 点击文章 → 顶部显示 AI 生成的封面图。保存为 public/demo.gif 后将此注释替换为：![Demo](./public/demo.gif) -->
-> **截图待补充** — 部署后添加。
+<p align="center">
+  <img src="./screenshots/home.png" width="800" alt="首页" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/dashboard.png" width="800" alt="后台管理" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/ai-search.png" height="420" alt="语义搜索" />
+  <img src="./screenshots/create-post.png" height="420" alt="创建文章" />
+</p>
 
 ---
 
